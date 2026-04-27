@@ -71,8 +71,8 @@ class RefinedDocument:
     @property
     def body(self):
         self._refine_if_required()
-        pages = [self._collapse_soft_linebreaks(page) for page in self._processed_body]
-        return self._truncate_at_references(pages)
+        pages = self._truncate_at_references(self._processed_body)
+        return [self._collapse_soft_linebreaks(page) for page in pages]
 
     @property
     def headers(self):
@@ -226,7 +226,8 @@ class RefinedDocument:
         :param item: page index
         :return: page content
         """
-        return self._collapse_soft_linebreaks(self._processed_body[item])
+        pages = self._truncate_at_references(self._processed_body[: item + 1])
+        return self._collapse_soft_linebreaks(pages[item]) if item < len(pages) else []
 
     @staticmethod
     def _collapse_soft_linebreaks(lines: list[str]) -> list[str]:
@@ -242,14 +243,14 @@ class RefinedDocument:
             if not buffer:
                 buffer = line
                 continue
-            if re.search(r"[A-Za-z]-$", buffer) and re.match(r"^[A-Za-z]", line):
-                buffer = f"{buffer[:-1]}{line}"
-                continue
             if re.search(r"[。．.]\s*$", buffer):
                 merged.append(buffer)
                 buffer = line
             else:
-                buffer = f"{buffer} {line}".strip()
+                if re.search(r"[A-Za-z]-$", buffer) and re.match(r"^[A-Za-z]", line):
+                    buffer = f"{buffer[:-1]}{line}"
+                else:
+                    buffer = f"{buffer} {line}".strip()
         if buffer:
             merged.append(buffer)
         return merged
