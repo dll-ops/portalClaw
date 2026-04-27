@@ -241,6 +241,9 @@ class RefinedDocument:
             if not buffer:
                 buffer = line
                 continue
+            if re.search(r"[A-Za-z]-$", buffer) and re.match(r"^[A-Za-z]", line):
+                buffer = f"{buffer[:-1]}{line}"
+                continue
             if re.search(r"[。．.]\s*$", buffer):
                 merged.append(buffer)
                 buffer = line
