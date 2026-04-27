@@ -71,7 +71,8 @@ class RefinedDocument:
     @property
     def body(self):
         self._refine_if_required()
-        return [self._collapse_soft_linebreaks(page) for page in self._processed_body]
+        pages = [self._collapse_soft_linebreaks(page) for page in self._processed_body]
+        return self._truncate_at_references(pages)
 
     @property
     def headers(self):
@@ -252,3 +253,17 @@ class RefinedDocument:
         if buffer:
             merged.append(buffer)
         return merged
+
+    @staticmethod
+    def _truncate_at_references(pages: list[list[str]]) -> list[list[str]]:
+        trimmed: list[list[str]] = []
+        for page in pages:
+            kept_lines: list[str] = []
+            for line in page:
+                if re.fullmatch(r"references?", line.strip(), re.IGNORECASE):
+                    if kept_lines:
+                        trimmed.append(kept_lines)
+                    return trimmed
+                kept_lines.append(line)
+            trimmed.append(kept_lines)
+        return trimmed
